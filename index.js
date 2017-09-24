@@ -43,8 +43,6 @@ var askUrlText = [
     "On which website?"
 ];
 
-var searchResponse = null;
-
 //// Log the JSON request/response to ngrok console
 // app.enableRequestLogging();
 // app.enableResponseLogging();
@@ -66,8 +64,19 @@ let handlers = {
             app.setSessionAttribute('anyQuery', anyQuery);
             app.ask(askUrlText[randomNumber]);
         }
-        finalizeGoogleSearch(url, domain, anyQuery);
-        //pushNotification("Searcher: " + anyQuery, url);
+        else {
+            app.setSessionAttribute('nextResult', 4);
+            let searchUrl = "";
+            if (url !== "") {
+                searchUrl = url;
+            }
+            else {
+                searchUrl = domain;
+            }
+
+            app.setSessionAttribute('searchUrl', searchUrl);
+            finalizeGoogleSearch(searchUrl, anyQuery, 1);
+        }
 
 
     },// end of 'search-website'
@@ -75,45 +84,122 @@ let handlers = {
     //complete search
     'url-domain': function (url, domain) {
         let query = app.getSessionAttribute('anyQuery');
-        finalizeGoogleSearch(url, domain, query);
-        //pushNotification("Searcher: " + query, url);
-    }// end of url-domain
+        let searchUrl = "";
+        if (url !== "") {
+            searchUrl = url;
+        }
+        else {
+            searchUrl = domain;
+        }
 
-}
+        app.setSessionAttribute('searchUrl', searchUrl);
+        app.setSessionAttribute('nextResult', 4);
 
-function finalizeGoogleSearch(url, domain, query){
-    var searchUrl = "";
-    if (url !== "") {
-        searchUrl = url;
+        finalizeGoogleSearch(searchUrl, query, 1);
+
+    },// end of url-domain
+
+
+    'go-on': function () {
+        let nextResult = app.getSessionAttribute('nextResult');
+        let searchUrl = app.getSessionAttribute('searchUrl');
+        let anyQuery = app.getSessionAttribute('anyQuery');
+
+        finalizeGoogleSearch(searchUrl, anyQuery, nextResult);
+
+        app.setSessionAttribute('nextResult', nextResult + 3);
+
+    },
+
+    //This intent gets the link title and snippet of the requested search result
+    'result-detail': function (ordinal) {
+        console.log(ordinal);
+
+        let searchUrl = app.getSessionAttribute('searchUrl');
+        let anyQuery = app.getSessionAttribute('anyQuery');
+        let searchResponse = null;
+        let httpUrl = '';
+
+        if (searchUrl.indexOf('.') !== -1) {
+            httpUrl = "http://www." + searchUrl;
+        }
+        else {
+            httpUrl = "http://www." + searchUrl + '.com';
+        }
+
+        //if user wants to search on google: search whole web
+        if (httpUrl === 'http://www.google.com') {httpUrl = ''}
+
+        googleSearch.build({
+            q: anyQuery,
+            start: ordinal,
+            fileType: "",
+            gl: "", //location
+            lr: "lang_en",
+            num: 1, // Number of search results to return between 1 and 10, inclusive
+            siteSearch: httpUrl // Restricts results to URLs from a specified site
+        }, function (error, response) {
+            searchResponse = response.items;
+
+            let speech = app.speechBuilder()
+                .addText(searchResponse[0].snippet).addBreak('300ms')
+                .addText('About which other result do you want more information?').addBreak('300ms')
+                .addText('Or are you done?')
+                .build();
+            app.ask(speech);
+            // console.log(JSON.stringify(searchResponse, null, 2));
+            pushNotification(searchResponse[0].title, searchResponse[0].link)
+        });
+
+    }
+};//end of intent handlers
+
+
+    function finalizeGoogleSearch(searchUrl, query, resultNr)
+{
+    let searchResponse = null;
+    let httpUrl = '';
+
+    if (searchUrl.indexOf('.') !== -1) {
+        httpUrl = "http://www." + searchUrl;
     }
     else {
-        searchUrl = domain;
+        httpUrl = "http://www." + searchUrl + '.com';
     }
+
+
+    //if user wants to search on google: search whole web
+    if (httpUrl === 'http://www.google.com') {httpUrl = ''}
     googleSearch.build({
         q: query,
-        start: 1,
+        start: resultNr,
         fileType: "",
         gl: "", //location
         lr: "lang_en",
-        num: 10, // Number of search results to return between 1 and 10, inclusive
-        siteSearch: "http://www." + searchUrl // Restricts results to URLs from a specified site
+        num: 3, // Number of search results to return between 1 and 10, inclusive
+        siteSearch: httpUrl // Restricts results to URLs from a specified site
     }, function (error, response) {
         searchResponse = response.items;
-        //searchResponse[0].title).toString()
 
-        let speech = app.speechBuilder()
-            .addText('Your search results on').addText(searchUrl).addText(' are: ')
-            .addSayAsOrdinal(1).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('500ms')
-            .addSayAsOrdinal(2).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('500ms')
-            .addSayAsOrdinal(3).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('500ms')
-            .addText('About which result would you want to know more?')
+        let speech = app.speechBuilder();
+        if (resultNr < 3) {
+            speech.addText('Your search results on').addText(searchUrl).addText(' are: ');
+        }
+        else {
+            speech.addText('Your next results are:');
+        }
+        speech.addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('500ms')
+            .addSayAsOrdinal(resultNr + 1).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('500ms')
+            .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('500ms')
+            .addText('About which result would you want to know more?').addText('Or do you want to search further?', 0.3)
             .build();
         app.ask(speech);
-
         //console.log(JSON.stringify(response, null, 2));
-    });
-}
-function sendCard (Title, url){
+    });}
+
+
+
+function sendCard(Title, url) {
     let basicCard = new BasicCard()
         .setTitle('Title')
         // Image is required if there is no formatted text
@@ -127,14 +213,17 @@ function sendCard (Title, url){
 
 }
 
-function pushNotification (title, url){
-    pusher.link("", title, url, function(error, response) {});
+function pushNotification(title, url) {
+    pusher.link("", title, url, function (error, response) {
+    });
 }
+
 function filter(data, replace) {
     var str = data;//+ ' ' + node.value.link;
     str = str.replaceAll(replace, ' ');
     return str
 }
+
 String.prototype.replaceAll = function (strReplace, strWith) {
     // See http://stackoverflow.com/a/3561711/556609
     var esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
