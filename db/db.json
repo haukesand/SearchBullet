@@ -5,8 +5,19 @@
 			"data": {},
 			"metaData": {
 				"createdAt": "2017-09-10T20:38:57.049Z",
-				"sessionsCount": 114,
-				"lastUsedAt": "2017-09-24T05:05:53.923Z"
+				"sessionsCount": 125,
+				"lastUsedAt": "2017-09-24T18:13:08.667Z"
+			}
+		}
+	},
+	{
+		"userId": "APhe68EQMap4cCTdI4xz2OVUewlD",
+		"userData": {
+			"data": {},
+			"metaData": {
+				"createdAt": "2017-09-24T05:26:21.736Z",
+				"sessionsCount": 9,
+				"lastUsedAt": "2017-09-24T18:18:07.619Z"
 			}
 		}
 	}
