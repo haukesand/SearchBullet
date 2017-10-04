@@ -54,14 +54,13 @@ var askUrlText = [
 
 let handlers = {
 
-    'LAUNCH': function () {
-        app.toIntent('search-website');
-    },
+    /* 'LAUNCH': function () {
+         app.toIntent('search-website');
+     },*/
 
     'search-website': function (url, domain, anyQuery) {
         if (url === "" && domain === "") {
             var randomNumber = Math.floor(Math.random() * askUrlText.length);
-            app.setSessionAttribute('anyQuery', anyQuery);
             app.ask(askUrlText[randomNumber]);
         }
         else {
@@ -73,13 +72,26 @@ let handlers = {
             else {
                 searchUrl = domain;
             }
-
+            app.setSessionAttribute('anyQuery', anyQuery);
             app.setSessionAttribute('searchUrl', searchUrl);
             finalizeGoogleSearch(searchUrl, anyQuery, 1);
         }
 
 
     },// end of 'search-website'
+
+
+    'just-search': function (any) {
+        console.log('just-search')
+        app.setSessionAttribute('nextResult', 4);
+        app.setSessionAttribute('anyQuery', any);
+
+        let searchUrl = "google.com";
+        app.setSessionAttribute('searchUrl', searchUrl);
+        finalizeGoogleSearch(searchUrl, any, 1);
+
+    },// end of 'just-search'
+
 
     //complete search
     'url-domain': function (url, domain) {
@@ -113,7 +125,7 @@ let handlers = {
 
     //This intent gets the link title and snippet of the requested search result
     'result-detail': function (ordinal) {
-        console.log(ordinal);
+        console.log("Ordinal: " + ordinal);
 
         let searchUrl = app.getSessionAttribute('searchUrl');
         let anyQuery = app.getSessionAttribute('anyQuery');
@@ -128,7 +140,9 @@ let handlers = {
         }
 
         //if user wants to search on google: search whole web
-        if (httpUrl === 'http://www.google.com') {httpUrl = ''}
+        if (httpUrl === 'http://www.google.com') {
+            httpUrl = ''
+        }
 
         googleSearch.build({
             q: anyQuery,
@@ -143,7 +157,7 @@ let handlers = {
 
             let speech = app.speechBuilder()
                 .addText(searchResponse[0].snippet).addBreak('300ms')
-                .addText('About which other result do you want more information?').addBreak('300ms')
+                .addText('About which other result do you want more information?').addBreak('200ms')
                 .addText('Or are you done?')
                 .build();
             app.ask(speech);
@@ -155,8 +169,7 @@ let handlers = {
 };//end of intent handlers
 
 
-    function finalizeGoogleSearch(searchUrl, query, resultNr)
-{
+function finalizeGoogleSearch(searchUrl, query, resultNr) {
     let searchResponse = null;
     let httpUrl = '';
 
@@ -169,7 +182,9 @@ let handlers = {
 
 
     //if user wants to search on google: search whole web
-    if (httpUrl === 'http://www.google.com') {httpUrl = ''}
+    if (httpUrl === 'http://www.google.com') {
+        httpUrl = ''
+    }
     googleSearch.build({
         q: query,
         start: resultNr,
@@ -181,6 +196,9 @@ let handlers = {
     }, function (error, response) {
         searchResponse = response.items;
 
+        console.log(JSON.stringify(response, null, 2));
+
+        //TODO: Add response if google does not reply
         let speech = app.speechBuilder();
         if (resultNr < 3) {
             speech.addText('Your search results on').addText(searchUrl).addText(' are: ');
@@ -188,29 +206,14 @@ let handlers = {
         else {
             speech.addText('Your next results are:');
         }
-        speech.addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('500ms')
+        speech.addBreak('300ms').addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('500ms')
             .addSayAsOrdinal(resultNr + 1).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('500ms')
-            .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('500ms')
+            .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('800ms')
             .addText('About which result would you want to know more?').addText('Or do you want to search further?', 0.3)
             .build();
         app.ask(speech);
-        //console.log(JSON.stringify(response, null, 2));
-    });}
 
-
-
-function sendCard(Title, url) {
-    let basicCard = new BasicCard()
-        .setTitle('Title')
-        // Image is required if there is no formatted text
-        .setImage('https://via.placeholder.com/720x480',
-            'accessibilityText')
-        // Formatted text is required if there is no image
-        .setFormattedText('Formatted Text')
-        .addButton('Learn more', 'https://www.jovo.tech (https://www.jovo.tech/)');
-
-    app.googleAction().showBasicCard(basicCard);
-
+    });
 }
 
 function pushNotification(title, url) {
