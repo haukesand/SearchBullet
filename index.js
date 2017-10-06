@@ -180,7 +180,6 @@ function finalizeGoogleSearch(searchUrl, query, resultNr) {
         httpUrl = "http://www." + searchUrl + '.com';
     }
 
-
     //if user wants to search on google: search whole web
     if (httpUrl === 'http://www.google.com') {
         httpUrl = ''
@@ -200,17 +199,23 @@ function finalizeGoogleSearch(searchUrl, query, resultNr) {
 
         //TODO: Add response if google does not reply
         let speech = app.speechBuilder();
-        if (resultNr < 3) {
-            speech.addText('Your search results on').addText(searchUrl).addText(' are: ');
+        if (searchResponse != undefined) {
+            if (resultNr < 3) {
+                speech.addText('Your search results on').addText(searchUrl).addText(' are: ');
+            }
+            else {
+                speech.addText('Your next results are:');
+            }
+            speech.addBreak('300ms').addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('800ms')
+                .addSayAsOrdinal(resultNr + 1).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('800ms')
+                .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('1000ms')
+                .addText('About which result would you want to know more?').addText('Or do you want to search further?', 0.3)
+                .build();
         }
         else {
-            speech.addText('Your next results are:');
+            speech.addText('Sorry, ').addText(query).addBreak('500ms').addText('on').addText(searchUrl).addText('did not return any results')
+                .build();
         }
-        speech.addBreak('300ms').addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('500ms')
-            .addSayAsOrdinal(resultNr + 1).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('500ms')
-            .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('800ms')
-            .addText('About which result would you want to know more?').addText('Or do you want to search further?', 0.3)
-            .build();
         app.ask(speech);
 
     });
