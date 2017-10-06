@@ -7,9 +7,8 @@
 
 const app = require('jovo-framework').Jovo;
 const webhook = require('jovo-framework').Webhook;
-const BasicCard = require('jovo-framework').GoogleAction.BasicCard;
 const PushBullet = require('pushbullet');
-var GoogleSearch = require('google-search');
+const GoogleSearch = require('google-search');
 
 // Listen for post requests
 webhook.listen(3000, function () {
@@ -22,7 +21,7 @@ webhook.post('/webhook', function (req, res) {
 });
 
 // API keys
-var googleSearch = new GoogleSearch({
+const googleSearch = new GoogleSearch({
     key: '',
     cx: ''
 });
@@ -35,7 +34,7 @@ const pusher = new PushBullet('');
 // Strings, variables & stuff
 // =================================================================================
 
-var askUrlText = [
+const askUrlText = [
     "Where do you want to search?",
     "On which website do you want to search?",
     "On which domain do you want to search?",
@@ -60,7 +59,7 @@ let handlers = {
 
     'search-website': function (url, domain, anyQuery) {
         if (url === "" && domain === "") {
-            var randomNumber = Math.floor(Math.random() * askUrlText.length);
+            let randomNumber = Math.floor(Math.random() * askUrlText.length);
             app.ask(askUrlText[randomNumber]);
         }
         else {
@@ -82,7 +81,7 @@ let handlers = {
 
 
     'just-search': function (any) {
-        console.log('just-search')
+        console.log('just-search');
         app.setSessionAttribute('nextResult', 4);
         app.setSessionAttribute('anyQuery', any);
 
@@ -155,7 +154,8 @@ let handlers = {
         }, function (error, response) {
             searchResponse = response.items;
 
-            let speech = app.speechBuilder()
+            let speech;
+            speech = app.speechBuilder()
                 .addText(searchResponse[0].snippet).addBreak('300ms')
                 .addText('About which other result do you want more information?').addBreak('200ms')
                 .addText('Or are you done?')
@@ -199,20 +199,18 @@ function finalizeGoogleSearch(searchUrl, query, resultNr) {
 
         //TODO: Add response if google does not reply
         let speech = app.speechBuilder();
-        if (searchResponse != undefined) {
+        if (searchResponse !== undefined) {
             if (resultNr < 3) {
                 speech.addText('Your search results on').addText(searchUrl).addText(' are: ');
-            }
-            else {
+            } else {
                 speech.addText('Your next results are:');
             }
             speech.addBreak('300ms').addSayAsOrdinal(resultNr).addText('Result: ').addText(filter(searchResponse[0].title, searchUrl)).addBreak('800ms')
                 .addSayAsOrdinal(resultNr + 1).addText('Result: ').addText(filter(searchResponse[1].title, searchUrl)).addBreak('800ms')
                 .addSayAsOrdinal(resultNr + 2).addText('Result: ').addText(filter(searchResponse[2].title, searchUrl)).addBreak('1000ms')
-                .addText('About which result would you want to know more?').addText('Or do you want to search further?', 0.3)
+                .addText('About which result would you want to know details?').addText('Or do you want to search further?', 0.3)
                 .build();
-        }
-        else {
+        } else {
             speech.addText('Sorry, ').addText(query).addBreak('500ms').addText('on').addText(searchUrl).addText('did not return any results')
                 .build();
         }
@@ -227,15 +225,15 @@ function pushNotification(title, url) {
 }
 
 function filter(data, replace) {
-    var str = data;//+ ' ' + node.value.link;
+    let str = data;//+ ' ' + node.value.link;
     str = str.replaceAll(replace, ' ');
     return str
 }
 
 String.prototype.replaceAll = function (strReplace, strWith) {
     // See http://stackoverflow.com/a/3561711/556609
-    var esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    var reg = new RegExp(esc, 'ig');
+    let esc = strReplace.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    let reg = new RegExp(esc, 'ig');
     return this.replace(reg, strWith);
 };
 
