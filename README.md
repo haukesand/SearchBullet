@@ -14,8 +14,7 @@ To use the action on your own device [a few steps](https://github.com/haukesand/
 5. Use [ngrok to route the fulfillment](https://www.jovo.tech/get-started/run-local-server) onto your developer machine.
 6. Enable [integration with Google Assistant](https://developers.google.com/actions/apiai/first-app).
 
-[![Video](assets/VideoPreview.jpg)](https://youtu.be/nQaFcTQubHE)
-
+[![Video](/assets/VideoPreview.JPG?raw=true)](https://youtu.be/nQaFcTQubHE)
 
 ## Roadmap
 Before the action/skill can get pushed to the Alexa and Google Home markets it needs a few more refinements:
