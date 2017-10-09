@@ -11,8 +11,9 @@ To use the action on your own device [a few steps](https://github.com/haukesand/
 2. Start a new project on Api.ai and [import the configuration from](https://api.ai/docs/best-practices/import-export-for-versions)  assets/SearchOnPage.zip
 3. Create [your google custom search keys](https://support.google.com/customsearch/answer/2631040?hl=en) (key & cx).
 4. Create a [pushbullet access token](https://docs.pushbullet.com/#api-quick-start).
-5. Use [ngrok to route the fulfillment](https://www.jovo.tech/get-started/run-local-server) onto your developer machine.
-6. Enable [integration with Google Assistant](https://developers.google.com/actions/apiai/first-app).
+5. Install npm dependencies [pushbullet](https://www.npmjs.com/package/pushbullet) & [google-search](https://www.npmjs.com/package/google-search)
+6. Use [ngrok to route the fulfillment](https://www.jovo.tech/get-started/run-local-server) onto your developer machine.
+7. Enable [integration with Google Assistant](https://developers.google.com/actions/apiai/first-app).
 
 [![Video](/assets/VideoPreview.JPG?raw=true)](https://youtu.be/nQaFcTQubHE)
 
